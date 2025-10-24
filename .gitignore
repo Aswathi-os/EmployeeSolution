@@ -1,0 +1,59 @@
+# Visual Studio user-specific files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# NuGet Packages
+*.nupkg
+*.snupkg
+packages/
+*.nuget.props
+*.nuget.targets
+
+# Visual Studio cache files
+.vscode/
+_ReSharper*/
+*.resharper
+*.DotSettings.user
+
+# Web files
+wwwroot/dist/
+wwwroot/css/*.min.css
+wwwroot/js/*.min.js
+node_modules/
+
+# Publish files
+**/bin/Release/*
+**/bin/Debug/*
+**/obj/Release/*
+**/obj/Debug/*
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.cache
+*.swp
+*.dbmdl
+*.bak
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Rider / JetBrains
+.idea/
+
+# Others
+*.pdb

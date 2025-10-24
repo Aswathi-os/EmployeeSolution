@@ -1,0 +1,30 @@
+﻿@page "/"
+@inject EmployeeApp.Services.EmployeeService EmployeeService
+
+<PageTitle>Home</PageTitle>
+
+<div class="home-container">
+    <h1>Welcome to Employee Registration App</h1>
+    <p>Manage your employees efficiently!</p>
+
+    <div class="dashboard-box">
+        <h2>Active Employees</h2>
+        @if (activeEmployees == null)
+        {
+            <p>Loading...</p>
+        }
+        else
+        {
+            <p class="active-count">@activeEmployees</p>
+        }
+    </div>
+</div>
+
+@code {
+    private int? activeEmployees;
+
+    protected override async Task OnInitializedAsync()
+    {
+        activeEmployees = await EmployeeService.GetActiveEmployeesCountAsync();
+    }
+}

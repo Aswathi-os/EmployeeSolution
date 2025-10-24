@@ -1,0 +1,125 @@
+﻿@* @page "/employee/{Id:int}"
+@inject EmployeeApp.Services.EmployeeService EmployeeService
+@inject NavigationManager Navigation
+@using EmployeeApp.Models;
+
+<h3>Employee Details</h3>
+
+@if (employee == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div>
+        <label>Name:</label>
+        <input @bind="employee.Name" class="form-control" />
+    </div>
+    <div>
+        <label>Department:</label>
+        <input @bind="employee.Department" class="form-control" />
+    </div>
+    <div>
+        <label>Place:</label>
+        <input @bind="employee.Place" class="form-control" />
+    </div>
+    <div>
+        <label>Salary:</label>
+        <input type="number" @bind="employee.Salary" class="form-control" />
+    </div>
+
+    <button class="btn btn-primary" @onclick="Save">Save Changes</button>
+    <button class="btn btn-secondary" @onclick="Back">Back to List</button>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Employee employee = new Employee();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != 0)
+        {
+            employee = await EmployeeService.GetByIdAsync(Id);
+        }
+    }
+
+    private async Task Save()
+    {
+        if (Id == 0)
+            await EmployeeService.CreateAsync(employee); // Create
+        else
+            await EmployeeService.UpdateAsync(employee); // Update
+
+        Navigation.NavigateTo("/employees");
+    }
+
+    private void Back()
+    {
+        Navigation.NavigateTo("/employees");
+    }
+}
+ *@
+
+@page "/employees/new"
+@page "/employees/{Id:int}"
+@inject EmployeeApp.Services.EmployeeService EmployeeService
+@inject NavigationManager Navigation
+@using EmployeeApp.Models
+
+<h3>@(Id == 0 ? "Add New Employee" : "Employee Details")</h3>
+
+@if (employee == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="mb-3">
+        <label class="form-label">Name:</label>
+        <input @bind="employee.Name" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Department:</label>
+        <input @bind="employee.Department" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Place:</label>
+        <input @bind="employee.Place" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Salary:</label>
+        <input type="number" @bind="employee.Salary" class="form-control" />
+    </div>
+
+    <button class="btn btn-primary me-2" @onclick="Save">Save Changes</button>
+    <button class="btn btn-secondary" @onclick="Back">Back to List</button>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Employee employee = new Employee();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != 0)
+        {
+            employee = await EmployeeService.GetByIdAsync(Id) ?? new Employee();
+        }
+    }
+
+    private async Task Save()
+    {
+        if (Id == 0)
+            await EmployeeService.CreateAsync(employee);
+        else
+            await EmployeeService.UpdateAsync(employee);
+
+        Navigation.NavigateTo("/employees");
+    }
+
+    private void Back()
+    {
+        Navigation.NavigateTo("/employees");
+    }
+}

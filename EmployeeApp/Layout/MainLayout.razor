@@ -1,0 +1,38 @@
+﻿@inherits LayoutComponentBase
+
+<PageTitle>EmployeeApp</PageTitle>
+
+<!-- 🌐 Top Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm px-4">
+    <a class="navbar-brand fw-bold" href="/">EmployeeApp</a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/employees" Match="NavLinkMatch.All">
+                    <i class="bi bi-people"></i> Employees
+                </NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/departments">
+                    <i class="bi bi-building"></i> Departments
+                </NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/about">
+                    <i class="bi bi-info-circle"></i> About
+                </NavLink>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<!-- 📄 Page Content -->
+<div class="container mt-4">
+    @Body
+</div>

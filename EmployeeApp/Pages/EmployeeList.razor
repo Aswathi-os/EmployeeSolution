@@ -1,0 +1,348 @@
+﻿@* 
+
+@page "/employees"
+@inject EmployeeApp.Services.EmployeeService EmployeeService
+@inject NavigationManager Navigation
+@using EmployeeApp.Models
+@inject IJSRuntime JSRuntime
+
+<h3>Employee List</h3>
+
+<div class="d-flex justify-content-between mb-3">
+    <button class="btn btn-success" @onclick="AddEmployee">Add Employee</button>
+    <button class="btn btn-danger" @onclick="BulkDelete" disabled="@(!selectedIds.Any())">
+        Delete Selected (@selectedIds.Count)
+    </button>
+</div>
+
+@if (employees == null || employees.Count == 0)
+{
+    <p>No employees found.</p>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>
+                    <input type="checkbox" @onchange="ToggleSelectAll" checked="@selectAll" />
+                </th>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Place</th>
+                <th>Salary</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var emp in employees)
+            {
+                <tr>
+                    <td>
+                        <input type="checkbox" value="@emp.Id"
+                               checked="@selectedIds.Contains(emp.Id)"
+                               @onchange="() => ToggleSelection(emp.Id)" />
+                    </td>
+                    <td>@emp.Name</td>
+                    <td>@emp.Department</td>
+                    <td>@emp.Place</td>
+                    <td>@emp.Salary</td>
+                    <td>
+                        <span class="badge @(emp.IsActive ? "bg-success" : "bg-secondary")">
+                            @(emp.IsActive ? "Active" : "Inactive")
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-1" @onclick="() => EditEmployee(emp.Id)">
+                            View/Edit
+                        </button>
+                        <button class="btn btn-sm btn-warning me-1" @onclick="() => ToggleStatus(emp.Id)">
+                            @(emp.IsActive ? "Deactivate" : "Activate")
+                        </button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteEmployee(emp.Id)">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Employee> employees = new();
+    private HashSet<int> selectedIds = new();
+    private bool selectAll = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        employees = await EmployeeService.GetAllAsync();
+    }
+
+    private void AddEmployee()
+    {
+        Navigation.NavigateTo("/employees/new");
+    }
+
+    private void EditEmployee(int id)
+    {
+        Navigation.NavigateTo($"/employees/{id}");
+    }
+
+    private async Task DeleteEmployee(int id)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete employee {id}?");
+        if (confirmed)
+        {
+            await EmployeeService.DeleteAsync(id);
+            employees = await EmployeeService.GetAllAsync();
+        }
+    }
+
+    private void ToggleSelection(int id)
+    {
+        if (selectedIds.Contains(id))
+            selectedIds.Remove(id);
+        else
+            selectedIds.Add(id);
+    }
+
+    private void ToggleSelectAll(ChangeEventArgs e)
+    {
+        selectAll = (bool?)e.Value ?? false;
+        if (selectAll)
+            selectedIds = employees.Select(e => e.Id).ToHashSet();
+        else
+            selectedIds.Clear();
+    }
+
+    private async Task BulkDelete()
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Delete {selectedIds.Count} selected employees?");
+        if (!confirmed)
+            return;
+
+        await EmployeeService.BulkDeleteAsync(selectedIds.ToList());
+        selectedIds.Clear();
+        selectAll = false;
+        employees = await EmployeeService.GetAllAsync();
+    }
+
+    private async Task ToggleStatus(int id)
+    {
+        await EmployeeService.ToggleStatusAsync(id);
+        employees = await EmployeeService.GetAllAsync();
+    }
+} *@
+
+@page "/employees"
+@inject EmployeeApp.Services.EmployeeService EmployeeService
+@inject NavigationManager Navigation
+@using EmployeeApp.Models
+@inject IJSRuntime JSRuntime
+
+<h3>Employee List</h3>
+
+<div class="mb-3 d-flex gap-2 flex-wrap">
+    <button class="btn btn-success" @onclick="AddEmployee">Add Employee</button>
+    <button class="btn btn-danger" @onclick="BulkDelete" disabled="@(!selectedIds.Any())">
+        Delete Selected (@selectedIds.Count)
+    </button>
+</div>
+
+<div class="mb-3 row g-2">
+    <!-- Name Filter -->
+    <div class="col-auto">
+        <input type="text" class="form-control" placeholder="Filter by Name"
+               @bind="filterName" @bind:event="oninput" />
+    </div>
+
+    <!-- Department Filter -->
+    <div class="col-auto">
+        <select class="form-select" @bind="filterDepartment">
+            <option value="">All Departments</option>
+            @foreach (var dept in departments)
+            {
+                <option value="@dept">@dept</option>
+            }
+        </select>
+    </div>
+
+    <!-- Active Filter -->
+    <div class="col-auto">
+        <select class="form-select" @bind="filterStatus">
+            <option value="">All Status</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+        </select>
+    </div>
+
+    <div class="col-auto">
+        <button class="btn btn-primary" @onclick="ApplyFilters">Apply Filters</button>
+        <button class="btn btn-secondary" @onclick="ResetFilters">Reset</button>
+    </div>
+</div>
+
+@if (filteredEmployees == null || filteredEmployees.Count == 0)
+{
+    <p>No employees found.</p>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>
+                    <input type="checkbox" @onchange="ToggleSelectAll" checked="@selectAll" />
+                </th>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Place</th>
+                <th>Salary</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var emp in filteredEmployees)
+            {
+                <tr>
+                    <td>
+                        <input type="checkbox" value="@emp.Id"
+                               checked="@selectedIds.Contains(emp.Id)"
+                               @onchange="() => ToggleSelection(emp.Id)" />
+                    </td>
+                    <td>@emp.Name</td>
+                    <td>@emp.Department</td>
+                    <td>@emp.Place</td>
+                    <td>@emp.Salary</td>
+                    <td>
+                        <span class="badge @(emp.IsActive ? "bg-success" : "bg-secondary")">
+                            @(emp.IsActive ? "Active" : "Inactive")
+                        </span>
+                    </td>
+                    <td>
+                        @* <button class="btn btn-sm btn-primary me-1" @onclick="() => EditEmployee(emp.Id)">
+                            View/Edit
+                        </button>
+                        <button class="btn btn-sm btn-warning me-1" @onclick="() => ToggleStatus(emp.Id)">
+                            @(emp.IsActive ? "Deactivate" : "Activate")
+                        </button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteEmployee(emp.Id)">
+                            Delete
+                        </button> *@
+                        <button class="btn btn-sm btn-custom me-1" @onclick="() => EditEmployee(emp.Id)">
+                            ✏️
+                        </button>
+
+                        <!-- Toggle Switch for Active/Inactive -->
+                        <div class="form-check form-switch d-inline">
+                            <input class="form-check-input" type="checkbox"
+                                   role="switch"
+                                   checked="@emp.IsActive"
+                                   @onchange="() => ToggleStatus(emp.Id)" />
+                            @* <label class="form-check-label">
+                                @(emp.IsActive ? "Active" : "Inactive") *@
+                            @* </label> *@
+                        </div>
+
+                        <button class="btn btn-sm btn-danger btn-custom" @onclick="() => DeleteEmployee(emp.Id)">
+                            🗑
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Employee> employees = new();
+    private List<Employee> filteredEmployees = new();
+    private HashSet<int> selectedIds = new();
+    private bool selectAll = false;
+
+    // Filter values
+    private string filterName = string.Empty;
+    private string filterDepartment = string.Empty;
+    private string filterStatus = string.Empty;
+    private List<string> departments = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        employees = await EmployeeService.GetAllAsync();
+        filteredEmployees = employees;
+
+        // Get unique departments for filter dropdown
+        departments = employees.Select(e => e.Department).Distinct().ToList();
+    }
+
+    private void AddEmployee() => Navigation.NavigateTo("/employees/new");
+    private void EditEmployee(int id) => Navigation.NavigateTo($"/employees/{id}");
+
+    private async Task DeleteEmployee(int id)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete employee {id}?");
+        if (confirmed)
+        {
+            await EmployeeService.DeleteAsync(id);
+            await ReloadEmployees();
+        }
+    }
+
+    private void ToggleSelection(int id)
+    {
+        if (selectedIds.Contains(id)) selectedIds.Remove(id);
+        else selectedIds.Add(id);
+    }
+
+    private void ToggleSelectAll(ChangeEventArgs e)
+    {
+        selectAll = (bool?)e.Value ?? false;
+        if (selectAll) selectedIds = filteredEmployees.Select(e => e.Id).ToHashSet();
+        else selectedIds.Clear();
+    }
+
+    private async Task BulkDelete()
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Delete {selectedIds.Count} selected employees?");
+        if (!confirmed) return;
+
+        await EmployeeService.BulkDeleteAsync(selectedIds.ToList());
+        selectedIds.Clear();
+        selectAll = false;
+        await ReloadEmployees();
+    }
+
+    private async Task ToggleStatus(int id)
+    {
+        await EmployeeService.ToggleStatusAsync(id);
+        await ReloadEmployees();
+    }
+
+    private void ApplyFilters()
+    {
+        filteredEmployees = employees
+            .Where(e =>
+                (string.IsNullOrWhiteSpace(filterName) || e.Name.Contains(filterName, StringComparison.OrdinalIgnoreCase)) &&
+                (string.IsNullOrWhiteSpace(filterDepartment) || e.Department == filterDepartment) &&
+                (string.IsNullOrWhiteSpace(filterStatus) || (filterStatus == "Active" ? e.IsActive : !e.IsActive))
+            ).ToList();
+    }
+
+    private void ResetFilters()
+    {
+        filterName = string.Empty;
+        filterDepartment = string.Empty;
+        filterStatus = string.Empty;
+        filteredEmployees = employees.ToList();
+    }
+
+    private async Task ReloadEmployees()
+    {
+        employees = await EmployeeService.GetAllAsync();
+        filteredEmployees = employees.ToList();
+        departments = employees.Select(e => e.Department).Distinct().ToList();
+    }
+}
