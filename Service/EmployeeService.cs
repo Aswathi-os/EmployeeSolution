@@ -31,6 +31,7 @@ namespace Service
 
         public async Task<IEnumerable<Employee>> TestGetAllAsync()
         {
+            var te = string.Empty;
             return await _context.Employees.ToListAsync();
         }
 
